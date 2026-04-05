@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { Role } from "@/lib/types";
 
-const nav = [
+const nav: Array<{ href: string; label: string }> = [
   { href: "/dashboard", label: "Home" },
   { href: "/catalog", label: "Catalog" },
   { href: "/saved", label: "Saved" },
@@ -46,19 +46,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <nav className="flex flex-col gap-1 p-2">
           {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`rounded-lg px-3 py-2 text-sm ${
-                pathname === item.href
-                  ? "bg-catalog-accent-muted font-medium text-catalog-accent"
-                  : "text-catalog-muted hover:bg-catalog-raised hover:text-catalog-ink"
-              }`}
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`rounded-lg px-3 py-2 text-sm ${
+                  pathname === item.href || pathname.startsWith(`${item.href}/`)
+                    ? "bg-catalog-accent-muted font-medium text-catalog-accent"
+                    : "text-catalog-muted hover:bg-catalog-raised hover:text-catalog-ink"
+                }`}
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
         </nav>
         <div className="absolute bottom-0 left-0 right-0 border-t border-catalog-border bg-catalog-canvas/80 p-3 text-xs text-catalog-muted">
           {role && <div className="mb-2 capitalize">Role: {role}</div>}

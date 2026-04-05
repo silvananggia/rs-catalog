@@ -5,9 +5,31 @@ import type {
   STACSearchParams,
   SceneCollection,
 } from "./types";
-
 const STAC_SEARCH_URL =
   "https://earth-search.aws.element84.com/v1/search";
+
+export interface StacSearchOptions {
+  /** Override STAC Item Search endpoint */
+  stacSearchUrl?: string;
+  /** When set (from catalog settings), restrict which collection IDs are queried */
+  enabledCollectionIds?: string[] | null;
+}
+
+function resolveCollectionsParam(
+  params: STACSearchParams,
+  enabled: string[] | null | undefined
+): STACSearchParams {
+  if (!enabled?.length) return params;
+  const requested = params.collections?.length
+    ? params.collections
+    : enabled;
+  const allowed = new Set(enabled);
+  const filtered = requested.filter((c) => allowed.has(c));
+  return {
+    ...params,
+    collections: filtered.length ? filtered : [...enabled],
+  };
+}
 
 const COLLECTION_MAP: Record<string, SceneCollection> = {
   "sentinel-2-l2a": "sentinel-2",
@@ -193,21 +215,37 @@ async function postStacSearch(
   }>;
 }
 
+function pickStacUrl(options?: StacSearchOptions): string {
+  return options?.stacSearchUrl ?? STAC_SEARCH_URL;
+}
+
 export async function searchSTAC(
-  params: STACSearchParams
+  params: STACSearchParams,
+  options?: StacSearchOptions
 ): Promise<NormalizedScene[]> {
-  const body = buildStacBody(params);
-  const json = await postStacSearch(STAC_SEARCH_URL, body);
+  const resolved = resolveCollectionsParam(
+    params,
+    options?.enabledCollectionIds
+  );
+  const body = buildStacBody(resolved);
+  const url = pickStacUrl(options);
+  const json = await postStacSearch(url, body);
   return json.features.map(normalizeSTACItem);
 }
 
 export async function searchSTACPaginated(
   params: STACSearchParams,
-  maxItems: number
+  maxItems: number,
+  options?: StacSearchOptions
 ): Promise<NormalizedScene[]> {
-  const pageSize = Math.min(params.limit ?? 50, 100);
-  const firstBody = buildStacBody({ ...params, limit: pageSize });
-  let page = await postStacSearch(STAC_SEARCH_URL, firstBody);
+  const resolved = resolveCollectionsParam(
+    params,
+    options?.enabledCollectionIds
+  );
+  const pageSize = Math.min(resolved.limit ?? 50, 100);
+  const firstBody = buildStacBody({ ...resolved, limit: pageSize });
+  const url = pickStacUrl(options);
+  let page = await postStacSearch(url, firstBody);
   const out: NormalizedScene[] = page.features.map(normalizeSTACItem);
 
   while (out.length < maxItems) {

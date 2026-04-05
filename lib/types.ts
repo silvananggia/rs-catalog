@@ -100,6 +100,29 @@ export interface IngestRequestBody {
   mode: "single" | "bulk";
 }
 
+/** Singleton row in Directus `catalog_settings` */
+export interface CatalogSettingsRecord {
+  id: string;
+  enabled_collection_ids?: string[] | null;
+  stac_search_url?: string | null;
+  default_cloud_cover?: number | null;
+  default_search_limit?: number | null;
+  bulk_ingest_max_items?: number | null;
+  date_range_days_default?: number | null;
+}
+
+export interface DirectusRoleRow {
+  id: string;
+  name: string;
+}
+
+export interface DirectusUserListRow {
+  id: string;
+  email: string;
+  status: string;
+  role: { id: string; name: string } | null;
+}
+
 export interface IngestResponseBody {
   jobId: string;
   inserted: number;

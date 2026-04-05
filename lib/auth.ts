@@ -85,3 +85,7 @@ export function roleCanViewHighRes(role: Role): boolean {
 export function roleCanSaveScenes(role: Role): boolean {
   return role === "admin" || role === "analyst";
 }
+
+export function roleCanAdmin(role: Role): boolean {
+  return role === "admin";
+}

@@ -5,6 +5,8 @@ import {
   getUserRole,
   roleCanIngest,
 } from "@/lib/auth";
+import { getMergedCatalogSettings } from "@/lib/catalog-settings-server";
+import { resolveStacSearchUrl } from "@/lib/catalog-settings";
 import {
   batchInsertScenes,
   createIngestionJob,
@@ -39,14 +41,28 @@ export async function POST(request: Request) {
   );
   const userId = verified?.sub ?? null;
 
-  const job = await createIngestionJob(body.query, userId);
+  const settings = await getMergedCatalogSettings();
+  const stacOpts = {
+    stacSearchUrl: resolveStacSearchUrl(settings),
+    enabledCollectionIds: settings.enabledCollectionIds,
+  };
+  const query = {
+    ...body.query,
+    limit: body.query.limit ?? settings.defaultSearchLimit,
+  };
+
+  const job = await createIngestionJob(query, userId);
   await updateIngestionJob(job.id, { status: "running" });
 
   try {
     const normalized =
       body.mode === "bulk"
-        ? await searchSTACPaginated({ ...body.query, limit: 100 }, 2000)
-        : await searchSTAC(body.query);
+        ? await searchSTACPaginated(
+            { ...query, limit: Math.min(query.limit ?? 100, 100) },
+            settings.bulkIngestMaxItems,
+            stacOpts
+          )
+        : await searchSTAC(query, stacOpts);
 
     const ids = normalized.map((n) => n.scene_id);
     const existing = await listScenesBySceneIds(ids);

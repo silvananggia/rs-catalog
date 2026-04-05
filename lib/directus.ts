@@ -1,4 +1,7 @@
 import type {
+  CatalogSettingsRecord,
+  DirectusRoleRow,
+  DirectusUserListRow,
   IngestionJob,
   JobStatus,
   NormalizedScene,
@@ -315,4 +318,99 @@ export async function listJobsForUserRole(
     return listIngestionJobs(100);
   }
   return listIngestionJobsForUser(userId, 100);
+}
+
+export async function getCatalogSettingsRow(): Promise<CatalogSettingsRecord | null> {
+  try {
+    const json = await directusAdminFetch<{ data: CatalogSettingsRecord[] }>(
+      `/items/catalog_settings?limit=1&fields=*`
+    );
+    return json.data[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function upsertCatalogSettings(
+  patch: Partial<Omit<CatalogSettingsRecord, "id">>
+): Promise<CatalogSettingsRecord> {
+  const existing = await getCatalogSettingsRow();
+  if (existing?.id) {
+    const json = await directusAdminFetch<{ data: CatalogSettingsRecord }>(
+      `/items/catalog_settings/${existing.id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(patch),
+      }
+    );
+    return json.data;
+  }
+  const json = await directusAdminFetch<{ data: CatalogSettingsRecord }>(
+    `/items/catalog_settings`,
+    {
+      method: "POST",
+      body: JSON.stringify(patch),
+    }
+  );
+  return json.data;
+}
+
+/**
+ * Lists Directus roles (`directus_roles`) via REST.
+ * @see https://docs.directus.io/reference/system/roles
+ */
+export async function listDirectusRoles(): Promise<DirectusRoleRow[]> {
+  const q = new URLSearchParams({
+    fields: "id,name",
+    sort: "name",
+    limit: "100",
+  });
+  const json = await directusAdminFetch<{ data: DirectusRoleRow[] }>(
+    `/roles?${q}`
+  );
+  return json.data;
+}
+
+/**
+ * Lists Directus users (`directus_users`) with nested role id/name.
+ * Uses static admin token — same source of truth as Directus Admin UI.
+ * @see https://docs.directus.io/reference/system/users
+ */
+export async function listDirectusUsers(limit = 200): Promise<DirectusUserListRow[]> {
+  const q = new URLSearchParams({
+    fields: "id,email,status,role.id,role.name",
+    sort: "email",
+    limit: String(limit),
+  });
+  const json = await directusAdminFetch<{ data: DirectusUserListRow[] }>(
+    `/users?${q}`
+  );
+  return json.data;
+}
+
+/**
+ * Updates a user’s `role` FK (UUID of `directus_roles.id`).
+ * Mirrors changing the role in Directus Admin → Users.
+ */
+export async function updateDirectusUserRole(
+  userId: string,
+  roleId: string
+): Promise<void> {
+  await directusAdminFetch(`/users/${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ role: roleId }),
+  });
+}
+
+/** Best-effort total scene rows (Directus meta total_count when supported). */
+export async function countScenesAdmin(): Promise<number | null> {
+  try {
+    const json = await directusAdminFetch<{
+      meta?: { total_count?: number };
+    }>(`/items/scenes?limit=0&meta=total_count`);
+    const n = json.meta?.total_count;
+    return typeof n === "number" ? n : null;
+  } catch {
+    return null;
+  }
 }

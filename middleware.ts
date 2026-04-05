@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 const COOKIE = "directus_access_token";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/saved", "/jobs"];
+const PROTECTED_PREFIXES = ["/dashboard", "/saved", "/jobs", "/admin"];
 
 /**
  * Edge Middleware cannot rely on non-NEXT_PUBLIC env vars (e.g. DIRECTUS_SECRET)
@@ -33,5 +33,11 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/saved/:path*", "/jobs/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/saved/:path*",
+    "/jobs/:path*",
+    "/admin",
+    "/admin/:path*",
+  ],
 };

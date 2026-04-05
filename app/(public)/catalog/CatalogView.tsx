@@ -27,6 +27,7 @@ import {
 } from "@/lib/titiler";
 import { getMapViewBBoxWgs84 } from "@/lib/map-extent";
 import { useToast } from "@/lib/toast-context";
+import type { MergedCatalogSettings } from "@/lib/catalog-settings";
 
 const Map = dynamic(
   () => import("@/components/Map").then((m) => m.Map),
@@ -67,8 +68,25 @@ export function CatalogView() {
     },
   });
 
+  const { data: catalogSettings } = useQuery({
+    queryKey: ["catalog-settings"],
+    queryFn: async () => {
+      const res = await fetch("/api/catalog/settings");
+      if (!res.ok) throw new Error("Catalog settings unavailable");
+      return res.json() as Promise<{
+        merged: MergedCatalogSettings;
+        stacSearchUrl: string;
+      }>;
+    },
+    staleTime: 60_000,
+  });
+
   const searchMutation = useMutation({
-    mutationFn: (p: STACSearchParams) => searchSTAC(p),
+    mutationFn: (p: STACSearchParams) =>
+      searchSTAC(p, {
+        stacSearchUrl: catalogSettings?.stacSearchUrl,
+        enabledCollectionIds: catalogSettings?.merged.enabledCollectionIds,
+      }),
     onSuccess: (data) => {
       setScenes(data);
       setVisualizeSceneId(null);
@@ -182,6 +200,7 @@ export function CatalogView() {
             onBboxManualChange={(b) => setBbox(b)}
             onSearch={onSearch}
             isSearching={searchMutation.isPending}
+            catalogDefaults={catalogSettings?.merged ?? null}
             getMapExtentBbox={() => {
               const m = olMapRef.current;
               if (!m) return null;

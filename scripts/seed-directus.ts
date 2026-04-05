@@ -208,6 +208,44 @@ async function main(): Promise<void> {
     },
   });
 
+  await ensureCollection("catalog_settings", { icon: "tune" });
+  await ensureField({
+    collection: "catalog_settings",
+    field: "enabled_collection_ids",
+    type: "json",
+    meta: { interface: "tags", note: "STAC collection IDs allowed for search/ingest; empty = all" },
+  });
+  await ensureField({
+    collection: "catalog_settings",
+    field: "stac_search_url",
+    type: "string",
+    meta: { interface: "input", note: "Override STAC Item Search URL (optional)" },
+  });
+  await ensureField({
+    collection: "catalog_settings",
+    field: "default_cloud_cover",
+    type: "integer",
+    meta: { interface: "input" },
+  });
+  await ensureField({
+    collection: "catalog_settings",
+    field: "default_search_limit",
+    type: "integer",
+    meta: { interface: "input" },
+  });
+  await ensureField({
+    collection: "catalog_settings",
+    field: "bulk_ingest_max_items",
+    type: "integer",
+    meta: { interface: "input" },
+  });
+  await ensureField({
+    collection: "catalog_settings",
+    field: "date_range_days_default",
+    type: "integer",
+    meta: { interface: "input" },
+  });
+
   console.log("Directus schema bootstrap complete (or already present).");
 }
 
