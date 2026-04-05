@@ -154,10 +154,16 @@ function buildStacBody(params: STACSearchParams): Record<string, unknown> {
     body.datetime = params.datetime;
   }
 
+  /**
+   * Cloud cover: STAC Item Search `query` extension (eo:cloud_cover lte).
+   * Earth Search / pgstac applies this reliably; a bare CQL2 `filter` object
+   * without `filter-lang` is often ignored by the API.
+   */
   if (typeof params.cloudCover === "number") {
-    body.filter = {
-      op: "<=",
-      args: [{ property: "eo:cloud_cover" }, params.cloudCover],
+    body.query = {
+      "eo:cloud_cover": {
+        lte: params.cloudCover,
+      },
     };
   }
 

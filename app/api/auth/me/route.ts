@@ -6,13 +6,9 @@ import { getCurrentUser } from "@/lib/directus";
 export async function GET() {
   const token = cookies().get(AUTH_COOKIE)?.value;
   if (!token) {
-    return NextResponse.json({ user: null }, { status: 401 });
+    return NextResponse.json({ user: null });
   }
 
   const user = await getCurrentUser(token);
-  if (!user) {
-    return NextResponse.json({ user: null }, { status: 401 });
-  }
-
-  return NextResponse.json({ user });
+  return NextResponse.json({ user: user ?? null });
 }

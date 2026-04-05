@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #020617;
-  --foreground: #e2e8f0;
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
 body {
@@ -17,4 +17,15 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* OpenLayers — AOI (matches UI accent) */
+.map-bbox-drag-fill.ol-dragbox {
+  border: 2px solid rgb(37 99 235);
+  background-color: rgb(37 99 235 / 0.1);
+}
+
+.map-bbox-drag-outline.ol-dragbox {
+  border: 2px dashed rgb(37 99 235);
+  background-color: transparent !important;
 }

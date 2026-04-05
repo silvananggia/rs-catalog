@@ -19,8 +19,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${font.variable} min-h-screen bg-slate-950 font-sans antialiased`}>
+    <html lang="en">
+      <body
+        className={`${font.variable} min-h-screen bg-background font-sans text-foreground antialiased`}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>
